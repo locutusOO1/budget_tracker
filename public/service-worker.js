@@ -13,6 +13,7 @@ const FILES_TO_CACHE = [
 console.log("Hi from your service-worker.js file!");
 
 self.addEventListener("install", function (evt) {
+    console.log("sw install");
     evt.waitUntil(
       caches.open(DATA_CACHE_NAME).then((cache) => cache.add("/api/transaction"))
     );
@@ -25,6 +26,7 @@ self.addEventListener("install", function (evt) {
 });
 
 self.addEventListener("activate", function(evt) {
+    console.log("sw activate");
     evt.waitUntil(
       caches.keys().then(keyList => {
         return Promise.all(
@@ -42,6 +44,7 @@ self.addEventListener("activate", function(evt) {
 });
 
 self.addEventListener("fetch", function(evt) {
+    console.log("sw fetch");
     if (evt.request.url.includes("/api/")) {
       evt.respondWith(
         caches.open(DATA_CACHE_NAME).then(cache => {
@@ -55,10 +58,11 @@ self.addEventListener("fetch", function(evt) {
               return response;
             })
             .catch(err => {
+              console.log("sw no network");
               // Network request failed, try to get it from the cache.
               return cache.match(evt.request);
             });
-        }).catch(err => console.log(err))
+        }).catch(err => console.log("sw fetch error: " + err))
       );
   
       return;

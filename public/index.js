@@ -1,6 +1,21 @@
 let transactions = [];
 let myChart;
 
+function saveRecord(tra){
+  console.log(tra);
+  const request = indexedDB.open("offlineTra",1);
+  request.onupgradeneeded = event => {
+    const db = event.target.result;
+    db.createObjectStore("offlineTra",{ autoIncrement: true });
+  }
+  request.onsuccess = () => {
+    const db = request.result;
+    const transaction = db.transaction(["offlineTra"],"readwrite");
+    const offlineTraStore = transaction.objectStore("offlineTra");
+    offlineTraStore.add(tra);
+  }
+}
+
 fetch("/api/transaction")
   .then(response => {
     return response.json();
@@ -151,3 +166,36 @@ document.querySelector("#add-btn").onclick = function() {
 document.querySelector("#sub-btn").onclick = function() {
   sendTransaction(false);
 };
+
+function pushToOnline() {
+  console.log("pushToOnline:");
+  const request = indexedDB.open("offlineTra",1);
+  request.onsuccess = () => {
+    const db = request.result;
+    const transaction = db.transaction(["offlineTra"], "readwrite");
+    const offlineTraStore = transaction.objectStore("offlineTra");
+    const getAll = offlineTraStore.getAll();
+    getAll.onsuccess = function() {
+      console.log(getAll.result);
+      if (getAll.result.length) {
+        fetch("/api/transaction/bulk", {
+          method: "POST",
+          body: JSON.stringify(getAll.result),
+          headers: {
+            Accept: "application/json, text/plain, */*",
+            "Content-Type": "application/json"
+          }
+        })
+        .then(response => response.json())
+        .then(() => {
+          const transaction = db.transaction(["offlineTra"], "readwrite");
+          const offlineTraStore = transaction.objectStore("offlineTra");
+          offlineTraStore.clear();
+          location.reload();
+        });
+      }
+    }
+  }
+}
+
+window.addEventListener("online",pushToOnline);
