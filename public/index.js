@@ -2,7 +2,6 @@ let transactions = [];
 let myChart;
 
 function saveRecord(tra){
-  console.log(tra);
   const request = indexedDB.open("offlineTra",1);
   request.onupgradeneeded = event => {
     const db = event.target.result;
@@ -168,7 +167,6 @@ document.querySelector("#sub-btn").onclick = function() {
 };
 
 function pushToOnline() {
-  console.log("pushToOnline:");
   const request = indexedDB.open("offlineTra",1);
   request.onsuccess = () => {
     const db = request.result;
@@ -176,7 +174,6 @@ function pushToOnline() {
     const offlineTraStore = transaction.objectStore("offlineTra");
     const getAll = offlineTraStore.getAll();
     getAll.onsuccess = function() {
-      console.log(getAll.result);
       if (getAll.result.length) {
         fetch("/api/transaction/bulk", {
           method: "POST",
